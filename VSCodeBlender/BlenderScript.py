@@ -6,7 +6,6 @@ def transform_entity(name, loc=(0,0,0), rot_deg=(0,0,0), relative=False):
     rot_rad = [math.radians(deg) for deg in rot_deg]
     mode = "relatively" if relative else "absolutely"
 
-    # 1. Sprawdzamy, czy to OBIEKT (np. Donut, Camera, NewLight)
     if name in bpy.data.objects:
         obj = bpy.data.objects[name]
         if relative:
@@ -20,11 +19,9 @@ def transform_entity(name, loc=(0,0,0), rot_deg=(0,0,0), relative=False):
             obj.rotation_euler = rot_rad
         print(f"SUCCESS: Transformed object '{name}' {mode}")
 
-    # 2. Jeśli to nie obiekt, sprawdzamy czy to KOLEKCJA (np. DonutAsset)
     elif name in bpy.data.collections:
         collection = bpy.data.collections[name]
         
-        # Szukamy głównych obiektów (root objects) w kolekcji
         root_objects = [obj for obj in collection.objects if obj.parent not in collection.objects.values()]
         
         if not root_objects:
@@ -43,11 +40,10 @@ def transform_entity(name, loc=(0,0,0), rot_deg=(0,0,0), relative=False):
                 obj.rotation_euler = rot_rad
         print(f"SUCCESS: Transformed collection '{name}' {mode}")
 
-    # 3. Jeśli to ani jedno, ani drugie
     else:
         print(f"ERROR: Entity '{name}' not found in objects or collections.")
 
-def add_custom_light(l_type='POINT', loc=(0,0,0), rot_deg=(0,0,0), energy=1000, name="NewLight"):
+def add_custom_light(name="NewLight", l_type='POINT', loc=(0,0,0), rot_deg=(0,0,0), energy=1000):
     bpy.ops.object.light_add(type=l_type, location=loc)
     light_obj = bpy.context.active_object
     light_obj.name = name
@@ -116,7 +112,7 @@ def import_collection(filepath, coll_name, main_obj_name=None, loc=(0,0,0), rot_
                 else:
                     print(f"WARNING: Collection '{coll_name}' imported, but main object '{main_obj_name}' not found inside.")
             else:
-                print(f"SUCCESS: Imported collection '{coll_name}' (no transformation applied)")
+                print(f"SUCCESS: Imported collection '{coll_name}'")
         
     except Exception as e:
         print(f"Collection import error: {e}")
@@ -149,27 +145,6 @@ def edit_camera(name="Camera", focal_length=50.0, use_dof=False, focus_dist=10.0
             
     print(f"SUCCESS: Edited camera '{name}' (Focal Length: {focal_length}mm, DoF: {use_dof})")
 
-
-    if name not in bpy.data.objects:
-        print(f"ERROR: Light '{name}' not found.")
-        return
-        
-    light_obj = bpy.data.objects[name]
-    
-    if light_obj.type != 'LIGHT':
-        print(f"ERROR: Object '{name}' is not a light.")
-        return
-        
-    light_data = light_obj.data
-    
-    if energy is not None:
-        light_data.energy = energy
-        
-    if color is not None:
-        light_data.color = color
-        
-    print(f"SUCCESS: Edited light '{name}' (Energy: {energy}, Color: {color})")
-
 def edit_light(name, energy=None, color: tuple = None):
     if name not in bpy.data.objects:
         print(f"ERROR: Light '{name}' not found.")
@@ -190,19 +165,42 @@ def edit_light(name, energy=None, color: tuple = None):
         if isinstance(color, tuple) and len(color) >= 3:
             light_data.color = color[:3]
         else:
-            print(f"WARNING: Invalid color format for '{name}'. Expected a tuple like (1.0, 1.0, 1.0).")
+            print(f"WARNING: Invalid color format for '{name}'. Expected a tuple.")
             return
             
     print(f"SUCCESS: Edited light '{name}' (Energy: {energy}, Color: {color})")
 
+def start_render(output_path, filename, start_frame, end_frame, is_animation=True):
+    scene = bpy.context.scene
+    scene.render.filepath = os.path.join(output_path, filename)
+    
+    if is_animation:
+        scene.render.image_settings.file_format = 'FFMPEG'
+        scene.render.ffmpeg.format = 'MPEG4'
+        scene.render.ffmpeg.codec = 'H264'
+        scene.render.ffmpeg.constant_rate_factor = 'MEDIUM'
+        scene.frame_start = start_frame
+        scene.frame_end = end_frame
+        print(f"Starting animation render (MP4): {filename}...")
+    else:
+        scene.render.image_settings.file_format = 'PNG'
+        print(f"Starting still render (PNG): {filename}...")
+
+    bpy.ops.render.render(animation=is_animation, write_still=True)
+    print(f"SUCCESS: Render saved to {output_path}")
+
 asset_path = r"C:\Users\huber\Desktop\Blender\Assets\donut.blend"
 
-import_collection(asset_path, "DonutAsset", "Donut", loc=(0, 0, 0), rot_deg=(0, 0, 0))
+#import_collection(asset_path, "DonutAsset", "Donut", loc=(0, 0, 0), rot_deg=(0, 0, 0))
 #add_custom_light('POINT', loc=(0,0,0), energy=1000, name="MojeSwiatlo")
 
-transform_entity("DonutAsset", loc=(5, 5, 0), rot_deg=(0, 0, 45), relative=False)
-transform_entity("Cube", loc=(10, 10, 0), relative=False)
-transform_entity("Camera", loc=(0, -10, 5), rot_deg=(90, 0, 0), relative=False)
-transform_entity("MojeSwiatlo", loc=(0, 0, 10), relative=False)
+#transform_entity("DonutAsset", loc=(5, 5, 0), rot_deg=(0, 0, 45), relative=False)
+#transform_entity("Cube", loc=(10, 10, 0), relative=False)
+#transform_entity("Camera", loc=(0, -10, 5), rot_deg=(90, 0, 0), relative=False)
+#transform_entity("MojeSwiatlo", loc=(0, 0, 10), relative=False)
+add_camera("cam1", (0,0,0), (0,0,0),)
+add_custom_light("l1",'SUN',(10, 10, 0), (0,0,0), 1000)
+edit_light("l1", 1000, (1.0,0.0,0.0))
+start_render(r"C:\Users\huber\Desktop\Blender", "asd", 1, 2, False)
 
 #edit_camera("Camera", focal_length=85.0, use_dof=True, fstop=2.8, focus_obj_name="Donut")

@@ -75,6 +75,17 @@ W Blenderze system Depth of Field działa według  hierarchii:
 1. **Priorytet obiektu:** Jeśli podano `focus_obj_name`, Blender zignoruje `focus_dist`. Ostrość będzie "przyklejona" do tego obiektu, nawet jeśli się on porusza.
 2. **Tryb Freehand (Dystans):** Aby użyć manualnego ustawienia odległości (`focus_dist`) ->  `focus_obj_name` = `None`.
 
+### Renderowanie
+* `start_render`: Rozpoczyna renderowanie sceny (domyślnie jako animacja).
+
+| Argument | Opis |
+| :--- | :--- |
+| `output_path` | Ścieżka do folderu. |
+| `filename` | Nazwa pliku z renderem (koniecznie jak raw string). |
+| `start_frame` | Początkowa klatka (tylko dla animacji). |
+| `end_frame` | Końcowa klatka (tylko dla animacji). |
+| `is_animation` | Przełączanie między zdjęciem a filmem. |
+
 ## Project Controls
 W zakładce modifiers (niebieski klucz) pod outlinerem:
 
